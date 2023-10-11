@@ -12,12 +12,14 @@ Description:
         + player 1 always starts
         + the reward is 1 if player 1 wins, -1 if player 2 wins, 0 if it's a draw and None if the game is not over
         + to know whose turn it is, we count the number of 1 and -1 in the board
-    * class QIterations() is the algorithm to approximate the optimal Q-function :
+
+    * class QIterations() is an algorithm to approximate the optimal Q-function :
         + Q is a dictionary of dictionaries
         + Q[state][action] is the expected reward of playing action in state
         + The algorithm uses an "epsilon-random" policy to explore the state space :
             - it sometimes plays a random move for its opponent
             - it sometimes plays what it thinks is the best move for its opponent
+        + It is not strictly speaking Q-Iteration because it doesn't store the transition probabilities
 """
 
 import numpy as np
