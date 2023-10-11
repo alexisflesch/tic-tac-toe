@@ -153,14 +153,10 @@ class QIterations():
             for a in self.MDP.action_space(s):
                 self.Q[s][a] = 0
 
-    def run(self, N=10, gamma=1, precision=1e-4, epsilon=.2):
+    def run(self, N=10, gamma=1, epsilon=.2):
         # apply N iterations of Q-Iteration
-        # N=-1 means executing until convergence
-        k = 0
-        while (k != N):
-            k += 1
-            print('Iteration', k)
-
+        for k in range(N):
+            print('Iteration', k+1)
             # Updating the function Q
             for s in self.MDP.state_space:
                 # Check whether it's player 1's turn or player 2's turn
@@ -191,6 +187,111 @@ class QIterations():
                         print("This shouldn't happen")
                         maxReward = 0
                     self.Q[s][a] = gamma*maxReward
+
+
+class QLearning():
+    def __init__(self, MDP=TicTacToe()):
+        self.MDP = MDP
+        self.Q = dict()
+        for s in self.MDP.state_space:
+            self.Q[s] = dict()
+            for a in self.MDP.action_space(s):
+                self.Q[s][a] = 0
+
+    def run(self, N=1000, gamma=1, epsilon=.2, alpha=.1):
+        # apply N iterations of Q-Iteration
+        for k in range(N):
+            if k % 10000 == 0:
+                print('Iteration', k+1)
+            # Choose a random state
+            index = np.random.randint(0, len(self.MDP.state_space))
+            s = self.MDP.state_space[index]
+
+            # Loop until terminal event
+            while self.MDP.reward(s, 1) is None:
+                player = self.MDP.whose_turn(s)
+
+                # Epsilon-greedy policy
+                if np.random.rand() < epsilon:
+                    a = np.random.choice(self.MDP.action_space(s))
+                else:
+                    a = max(self.Q[s], key=self.Q[s].get)
+                next_state, reward = self.MDP.random_transition(s, a, player)
+
+                # Is the game over ?
+                if reward is not None:
+                    self.Q[s][a] = (1-alpha)*self.Q[s][a] + alpha*reward
+                    break
+
+                # If not, compute the maximum reward expected from next state
+                next_actions = self.MDP.action_space(next_state)
+                maxReward = -np.inf
+                for act in next_actions:
+                    maxReward = max(maxReward, self.Q[next_state][act])
+                # Update Q-function
+                self.Q[s][a] = (1-alpha)*self.Q[s][a] + \
+                    alpha*(0+gamma*maxReward)
+
+                # Update state
+                s = next_state
+
+
+class QLearning2():
+    def __init__(self, MDP=TicTacToe()):
+        self.MDP = MDP
+        self.Q = dict()
+        for s in self.MDP.state_space:
+            self.Q[s] = dict()
+            for a in self.MDP.action_space(s):
+                self.Q[s][a] = 0
+
+    def run(self, N=100, gamma=1, epsilon=.2, alpha=.1, epsilon2=1):
+        """
+        Parameters:
+        - epsilon : for the epsilon-greedy policy
+        - epsilon2 : for the epsilon-random policy for the opponent
+        """
+        # apply N iterations of Q-Iteration
+        for k in range(N):
+            print('Iteration', k+1)
+
+            # Loop through all states
+            for s in self.MDP.state_space:
+
+                # Loop until terminal event
+                while self.MDP.reward(s, 1) is None:
+                    player = self.MDP.whose_turn(s)
+
+                    # Epsilon-greedy policy
+                    if np.random.rand() < epsilon:
+                        a = np.random.choice(self.MDP.action_space(s))
+                    else:
+                        a = max(self.Q[s], key=self.Q[s].get)
+
+                    # Epsilon-random policy for the opponent
+                    if np.random.rand() < epsilon2:
+                        next_state, reward = self.MDP.random_transition(
+                            s, a, player)
+                    else:
+                        next_state, reward = self.MDP.smart_transition(
+                            s, a, player, self.Q)
+
+                    # Is the game over ?
+                    if reward is not None:
+                        self.Q[s][a] = (1-alpha)*self.Q[s][a] + alpha*reward
+                        break
+
+                    # If not, compute the maximum reward expected from next state
+                    next_actions = self.MDP.action_space(next_state)
+                    maxReward = -np.inf
+                    for act in next_actions:
+                        maxReward = max(maxReward, self.Q[next_state][act])
+                    # Update Q-function
+                    self.Q[s][a] = (1-alpha)*self.Q[s][a] + \
+                        alpha*(0+gamma*maxReward)
+
+                    # Update state
+                    s = next_state
 
 
 def print_state(state):
@@ -282,33 +383,24 @@ def play_game(Q):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'iterate':
-            # Number of iterations
-            N = 50
-            # Load the Q function
-            Q = load_data()
-            # Q = None
-            QI = QIterations()
-            if Q is not None:
-                QI.Q = Q
-                iterations = Q['Number of iterations']
-            else:
-                iterations = 0
-            # Train against a random opponent
-            QI.run(N=N, gamma=.9, epsilon=1)
-            # Train against itself
-            QI.run(N=4*N, gamma=.9, epsilon=0)
-            QI.Q['Number of iterations'] = 5*N + iterations
-            print("Number of iterations so far :",
-                  QI.Q['Number of iterations'])
-            save_data(QI.Q)
+    # Number of iterations
+    # Recall that the number of states is close to 6000
+    # So for Q-Learning, an iteration being a random choice of a state,
+    # we need a lot of iterations !
+    # For Q-Learning2 and Q-iteration, an iteration is a loop through all states
+    # Load the Q function
+    Q = load_data()
+    # Q = None
+    QL = QLearning2()
+    if Q is not None:
+        QL.Q = Q
+        iterations = Q['Number of iterations']
     else:
-        # Load the Q function
-        Q = load_data()
-        if Q is None:
-            print('No Q function found, please run "python tic-tac-toe.py iterate"')
-        else:
-            print("Playing against a Q-function trained for",
-                  Q["Number of iterations"], "iterations")
-            play_game(Q)
+        iterations = 0
+    # Train against a random opponent
+    QL.run(N=50, epsilon2=1)
+    QL.run(N=200, epsilon2=0)
+    QL.Q['Number of iterations'] = 250 + iterations
+    print("Number of iterations so far :",
+          QL.Q['Number of iterations'])
+    save_data(QL.Q)
