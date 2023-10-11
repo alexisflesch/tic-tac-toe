@@ -2,7 +2,7 @@
 
 ## Description
 
-Reinforcement Learning agent learns to play Tic-tac-toe with a few algorithms:
+Reinforcement Learning applied to the famous game of tic-tac-toe. An agent learns to play with a few algorithms:
 - a modified version of Q-iteration
 - Q-learning
 - a modified version of Q-learning
