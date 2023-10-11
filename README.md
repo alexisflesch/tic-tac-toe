@@ -2,8 +2,10 @@
 
 ## Description
 
-Reinforcement Learning agent learns to play Tic-tac-toe with two algorithm (as the moment of writing, juste one) :
-- a version of Q-iteration
+Reinforcement Learning agent learns to play Tic-tac-toe with a few algorithms:
+- a modified version of Q-iteration
 - Q-learning
+- a modified version of Q-learning
 
-The output is saved as a json file. HTML/Javascript interface to come.
+The output is saved as a json file. See it in action here:
+https://hire.alexisfles.ch/tic-tac-toe.html
